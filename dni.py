@@ -41,13 +41,13 @@ class dni_Conv2d(nn.Module):
             dni_input_dims = input_dims
 
         self.input_size = list(input_size)
-        self.label_emb = nn.Linear(num_classes, np.prod(np.array(input_size)))
+        self.label_emb = nn.Linear(num_classes, int(np.prod(np.array(input_size))))
 
         self.layer1 = nn.Sequential(
                       nn.Conv2d(dni_input_dims, dni_hidden_size, kernel_size=5, padding=2),
                       nn.BatchNorm2d(dni_hidden_size),
                       nn.ReLU())
-        self.layer2 = nn.Sequential( 
+        self.layer2 = nn.Sequential(
                       nn.Conv2d(dni_hidden_size, dni_hidden_size, kernel_size=5, padding=2),
                       nn.BatchNorm2d(dni_hidden_size),
                       nn.ReLU())
@@ -64,4 +64,3 @@ class dni_Conv2d(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         return out
-

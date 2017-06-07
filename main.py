@@ -22,9 +22,13 @@ if __name__ == '__main__':
     if args.conditioned:
         model_name += '.conditioned'
     args.model_name = model_name
+
     if args.dataset == 'mnist':
         data = mnist(args)
-    elif args.dataset == 'cifar10':
+    elif args.dataset == 'svhn':
+        data = svhn(args)
+    else args.dataset == 'cifar10':
         data = cifar10(args)
+
     m = classifier(args, data)
     m.train_model()
