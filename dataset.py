@@ -38,7 +38,7 @@ class cifar10():
 
         test_dataset = dsets.CIFAR10(root='./data/',
                               train=False,
-                              transform=transforms.ToTensor())
+                              transform=transform)
 
         # Data Loader (Input Pipeline)
         self.train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
@@ -67,13 +67,13 @@ class svhn():
         # svhn Dataset
         transform = self.image_transform()
         train_dataset = dsets.SVHN(root='./data/',
-                               train=True,
+                               split='train',
                                transform=transform,
                                download=True)
 
         test_dataset = dsets.SVHN(root='./data/',
-                              train=False,
-                              transform=transforms.ToTensor())
+                              split='test',
+                              transform=transform,download=True)
 
         # Data Loader (Input Pipeline)
         self.train_loader = torch.utils.data.DataLoader(dataset=train_dataset,

@@ -2,7 +2,7 @@ from model import *
 from plot import *
 import torch
 from torch.autograd import Variable
-import ipdb
+import pdb
 
 class classifier():
 
@@ -29,7 +29,7 @@ class classifier():
         self.conditioned = args.conditioned
         self.best_perf = 0.
         self.stats = dict(grad_loss=[], classify_loss=[])
-        print "[%] model name will be", self.model_name
+        print ("[%] model name will be", self.model_name)
 
     def optimizer_module(self, optimizer, forward, out, label_onehot=None):
         optimizer.zero_grad()
@@ -72,33 +72,36 @@ class classifier():
         self.stats['classify_loss'].append(loss.data[0])
         return loss, grad_loss
 
-    def train_model(self):
+    def train_model(self, args):
         for epoch in range(self.num_epochs):
-            for i, (images, labels) in enumerate(self.train_loader):  
-                # Convert torch tensor to Variable
-                labels_onehot = torch.zeros([labels.size(0), self.num_classes])
-                labels_onehot.scatter_(1, labels.unsqueeze(1), 1)  
+            for i, (images, labels) in enumerate(self.train_loader):
+                if (args.dataset == 'svhn'):
+                    labels = torch.squeeze(labels).long()-1
+		#pdb.set_trace()
+		# Convert torch tensor to Variable
+                labels_onehot = torch.zeros([labels.size(0), self.num_classes])               
+                labels_onehot.scatter_(1, labels.unsqueeze(1), 1)
                 images = Variable(images).cuda()
                 labels = Variable(labels).cuda()
                 labels_onehot = Variable(labels_onehot).cuda()
                 out = images
-                # Forward + Backward + Optimize
+		# Forward + Backward + Optimize
                 for (optimizer, forward) in zip(self.net.optimizers, self.net.forwards):
                     if self.conditioned:
                         out = self.optimizer_module(optimizer, forward, out, labels_onehot)
                     else:
                         out = self.optimizer_module(optimizer, forward, out)
-                # synthetic model
-                # Forward + Backward + Optimize
+		# synthetic model
+	        # Forward + Backward + Optimize
                 loss, grad_loss = self.optimizer_dni_module(images, labels, labels_onehot, 
-                                          self.net.grad_optimizer, self.net.optimizer, self.net)
-                
+                                  self.net.grad_optimizer, self.net.optimizer, self.net)
+		        
                 if (i+1) % 100 == 0:
                     print ('Epoch [%d/%d], Step [%d/%d], Loss: %.4f, Grad Loss: %.4f' 
-                         %(epoch+1, self.num_epochs, i+1, self.num_train//self.batch_size, loss.data[0], grad_loss.data[0]))
+                        %(epoch+1, self.num_epochs, i+1, self.num_train//self.batch_size, loss.data[0], grad_loss.data[0]))
 
-            if (epoch+1) % 10 == 0:
-                perf = self.test_model(epoch+1)    
+            if (epoch) % 10 == 0:
+                perf = self.test_model(epoch+1, args.dataset)    
                 if perf > self.best_perf:
                     torch.save(self.net.state_dict(), self.model_name+'_model_best.pkl')
                     self.net.train()
@@ -109,12 +112,15 @@ class classifier():
         if self.plot:
             plot(self.stats, name=self.model_name)
 
-    def test_model(self, epoch):
+    def test_model(self, epoch, dataset):
         # Test the Model
         self.net.eval()
         correct = 0
-        total = 0
+        total = 0          
         for images, labels in self.test_loader:
+            if (dataset == 'svhn'):
+                labels = labels.long()-1
+                #labels = torch.squeeze(labels).long()-1
             images = Variable(images).cuda()
             outputs = self.net(images)
             outputs = outputs[-1]
